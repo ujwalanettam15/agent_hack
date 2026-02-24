@@ -1,0 +1,119 @@
+# The missing pieces for your Autonomous Agents Hackathon
+
+**The biggest untapped opportunity is a consumer AI agent that monitors the web AND makes phone calls on your behalf — nobody has combined these two capabilities.** The entire enterprise phone-calling market (Bland AI, Air AI, Retell AI) ignores consumers. Yutori Scouts monitors but can't act. DoNotPay writes letters but can't call. Vibrato calls but doesn't proactively monitor. Google's "Ask for Me" launched January 30, 2025 — just days before your hackathon — validating consumer demand but limiting itself to simple price queries at nail salons. The gap is a proactive agent that watches for problems (bill increases, expiring promotions, denied claims) and then autonomously calls to resolve them.
+
+---
+
+## What's winning at AI agent hackathons right now
+
+The Berkeley RDI LLM Agents Hackathon — the most significant agent hackathon completed just before your event — awarded its **Applications Track grand prize to "Smooth Operator,"** a multi-agent system that automates the U.S. moving industry by having specialized agents make actual phone calls to movers, negotiate prices, and compile personalized recommendations. The pattern is unmistakable across every major hackathon in this period: **agents that take real-world action beat agents that only chat**.
+
+The Vapi Build Challenge 2025 winners reinforce this. **Jiffly** won for making outbound phone calls to find and book appointments. **Talvin** won for conducting live voice-based job simulations. **Vapinception** won for letting users create other agents using only their voice. Multi-agent architecture is now table stakes — every winning project deploys **3-5 specialized agents** with distinct roles (researcher, strategizer, executor, validator). A single chatbot won't place.
+
+Three cross-cutting patterns define recent winners. First, projects that look like potential startups outperform tech demos — the SF scene's VC judges evaluate venture potential. Second, meta-agents that supervise or create other agents consistently impress (ModelProof won Microsoft's hackathon for cross-checking AI responses using dual LLMs). Third, social-impact framing scores well — ThreadFinders reunited missing persons, Candling triaged emergency calls, Edu.AI democratized Brazilian education.
+
+**The "wow factor" that hasn't been done yet**: no hackathon winner has combined proactive web monitoring + autonomous phone calling + live knowledge graph visualization in a single project. Each piece exists separately in winning projects, but nobody has unified them.
+
+---
+
+## The consumer phone-calling market has one massive gap
+
+The competitive landscape reveals a striking asymmetry. **Enterprise AI phone-calling is a bloodbath** — Bland AI ($65M raised, YC-backed), Air AI ($25K-$100K licensing), Retell AI (OpenAI partner), Synthflow, Goodcall, and dozens more are fighting for call center automation dollars at $0.09-$0.32/minute. Yet **consumer-facing AI phone calling is virtually empty**.
+
+**Vibrato** is the only general-purpose consumer product actually shipping. It makes calls on your behalf for bill negotiation, appointment scheduling, and subscription cancellation, with live audio streaming and real-time transcripts. Users can "whisper" instructions mid-call or take over seamlessly. It claims **$30-$100/month savings** on cable bills and 95% call success rate. But it's small — still in public beta with no major funding announcements.
+
+Google Duplex remains active in 49 states for restaurant reservations but is extremely narrow. **"Ask for Me" launched January 30, 2025** via Search Labs for price/availability queries at nail salons and auto shops — information-gathering only, never negotiation or advocacy. DoNotPay was hit with a **$193,000 FTC fine finalized January 16, 2025** for falsely advertising its "robot lawyer" capabilities and has zero voice features. OpenAI Operator launched January 23, 2025 as a web-browsing agent at $200/month — web-only, no phone.
+
+The white space is enormous: proactive bill negotiation, insurance claim disputes, medical billing advocacy, subscription cancellations requiring phone calls, government bureaucracy navigation, and hold-time elimination. **Nobody is combining web monitoring with phone calling** — an agent that detects a bill increase, then autonomously calls to negotiate it down would be genuinely novel.
+
+---
+
+## Yutori Scouts: the proactive agent architecture to study
+
+Yutori's Scouts represent the state-of-the-art in proactive consumer agents, launching publicly in June 2025 (after your hackathon, but the architecture is instructive). Each Scout run invokes an average of **76 agents** processing approximately **1 million tokens at ~$0.35/run**. The system uses an orchestrator-subagent pattern: the orchestrator receives a natural language query, enriches the intent with time bounds and quality constraints, then delegates to specialized subagents for social media, academic journals, news sites, and more.
+
+Three technical insights from Yutori are directly applicable. First, **intent enrichment** — translating vague queries into imperative step-by-step instructions with concrete deliverables boosted results from ~6 to ~14 relevant findings per run. Second, **intelligence routing** — cheaper models handle simple tasks (fetching Reddit posts) while expensive models handle complex reasoning. Third, **drift prevention** — instead of prepending past reports in context (which causes over-indexing on previous topics), they use iterative keyword search on their report archive.
+
+Yutori runs on **DBOS** for durable workflow execution with Postgres, enabling dynamic workflow generation by the agent rather than predefined pipelines. Their proprietary Navigator model (n1) achieves **78.7% on Online-Mind2Web** and is 2-3x faster than Claude or Gemini per step. Current limitation: cannot access content behind authentication walls.
+
+---
+
+## Vapi technical playbook for a 24-hour build
+
+The fastest path to a working outbound call is a single POST to `https://api.vapi.ai/call` with your assistant ID, phone number ID, and customer number. Free Vapi phone numbers are instant — go to the Phone Numbers tab, create one, done. You get **$10 in free credits** (approximately 30-75 minutes of real calls depending on your stack).
+
+**The optimal low-latency stack for your demo targets ~465ms end-to-end**: Deepgram for STT (90ms), Groq with Llama models for LLM (200ms), and ElevenLabs Flash v2.5 for TTS (75ms TTFB). The single most important configuration is `startSpeakingPlan` — **Vapi's default "no punctuation" delay adds 1,500ms that most developers don't realize is there**. Override this immediately.
+
+Key January-February 2025 features relevant to your project: **Workflow Blocks** (Jan 20) for multi-step conversational flows, **HttpRequest Workflow Nodes** (Jan 29) for calling external APIs mid-conversation, **DeepSeek Reasoner** model support (Jan 22), and **Gemini 2.0 Flash** models (Jan 7). For hackathons, avoid Workflows — they can be slow (4-8 seconds for condition evaluation) and occasionally get stuck. Use a plain assistant with custom tool calling instead.
+
+For tool calling to Neo4j or web search during conversations, define custom tools in your assistant's model config. Vapi POSTs to your webhook with the tool call details, and your server responds with results. **Critical gotchas**: always return HTTP 200 even for errors, use single-line strings (line breaks cause parsing errors), match `toolCallId` exactly, and increase `maxTokens` beyond the default 100 for complex responses. For the hackathon, Vapi's **Code Tools** let you write TypeScript that runs on Vapi's infrastructure — no server deployment needed.
+
+To trigger a call during your live demo, have a teammate ready to hit an API endpoint at your signal. The `schedulePlan` parameter with `earliestAt` lets you schedule calls for a precise moment if you know your demo slot time.
+
+---
+
+## Modulate AI is inaccessible, but Hume AI fills the gap perfectly
+
+**Modulate's ToxMod and VoiceVault are enterprise-only with no public API, no free tier, and no self-service signup.** Their GitHub organization has zero public repositories. Access requires contacting their sales team, and the developer console is gated behind customer accounts. No evidence exists of Modulate sponsoring hackathons or offering hackathon access.
+
+**Hume AI is the best alternative and explicitly supports Vapi integration.** It analyzes emotion from voice across **48+ dimensions** (admiration, anger, anxiety, awe, contempt, distress, etc.) via streaming WebSocket API. It has a free tier, self-service signup at platform.hume.ai, Python and TypeScript SDKs, and documented integration with Vapi. For a hackathon project, Hume can analyze the emotional state of both the AI agent and the human it's calling — detecting when a customer service rep sounds frustrated (time to change tactics) or when a negotiation is going well.
+
+For explicit toxicity detection, **AssemblyAI** offers content safety detection across 19+ categories with $50 in free credits, or **Google's Perspective API** scores text for toxicity completely free (but requires transcription first). The practical hackathon architecture: Vapi handles the call → Hume streams emotion analysis in real-time → AssemblyAI or Perspective API flags content safety issues → your dashboard visualizes it all.
+
+---
+
+## Neo4j as the "brain" that makes demos visually unforgettable
+
+The killer demo element is **a live knowledge graph that grows on screen as the voice agent has conversations**. Every entity the agent encounters — people, companies, account numbers, negotiation outcomes, sentiment shifts — becomes a visible node with relationships. Judges watch the graph expand in real-time while hearing the agent talk.
+
+**Graphiti by Zep AI** is the top technical recommendation for this. It's an open-source Python framework specifically designed for real-time, temporally-aware knowledge graphs stored in Neo4j, with **P95 retrieval latency of 300ms** — fast enough for mid-conversation queries. It uses hybrid search (semantic embeddings + BM25 + graph traversal) with no LLM calls at retrieval time. Bi-temporal tracking records when facts were true AND when they were ingested, enabling the agent to reason about what's changed.
+
+For visualization, **Neovis.js** is the fastest hackathon path — it connects directly to Neo4j via Bolt protocol and renders force-directed graphs in the browser. Wire it to Server-Sent Events from your backend: when the agent writes a new node to Neo4j, emit an SSE event, and the frontend calls `neoViz.reload()`. The entire real-time pipeline is ~50 lines of code.
+
+For Cypher generation, use LangChain's `GraphCypherQAChain` with `gpt-4o-mini` for Cypher (cheap, fast) and `gpt-4o` for answer synthesis. Include few-shot examples of question-to-Cypher pairs in your prompt. **Neo4j AuraDB Free** takes under 3 minutes to set up with no credit card.
+
+Neo4j judges at hackathons prioritize **practicality and usefulness over raw developer skill**, and specifically want to see graph relationships adding value that a vector database couldn't provide. The real-time growing graph during a voice call is exactly the kind of visual proof they reward.
+
+---
+
+## Tavily + Yutori: search discovers, browsing acts
+
+No packaged Tavily-Yutori integration exists, but their APIs are natural complements forming a complete web intelligence pipeline. **Tavily excels at fast, structured search** — its Search API returns AI-optimized results with clean content snippets, domain filtering, and time-range control, while its Extract API converts any URL into LLM-ready data. **Yutori excels at autonomous browser operation** — its Browsing API navigates complex sites, fills forms, and handles JavaScript-heavy pages.
+
+The practical pattern for your hackathon: Tavily Search discovers relevant URLs and sources → Tavily Extract pulls clean content from simple pages → Yutori Browsing handles interactive pages requiring clicks, scrolls, or form fills → Yutori Scouting monitors discovered sources on an ongoing schedule → webhooks notify your agent of changes. Tavily has a generous free tier (1,000 credits) and native integrations with LangChain, LlamaIndex, and CrewAI. Yutori offers Python SDK and MCP servers.
+
+The key architectural insight from Yutori's team: **fan-out search with intent enrichment dramatically improves coverage**. Don't pass user queries verbatim to search — enrich them with time bounds, source categories, quality constraints, and concrete deliverables before dispatching to multiple specialized subagents.
+
+---
+
+## How to win when judges represent sponsor companies
+
+At Creators Corner events, the standard format is **3-minute pitches** with **8-15 separate sponsor prize tracks** and a grand prize. The December 7, 2024 Voice & Video AI Agents Hackathon had $65K+ in prizes across AWS, Temporal, Modal, Retell, Vapi, LMNT, Coval, and more — each with independent judging. **A single project can win multiple sponsor prizes** by deeply integrating 3-4 sponsor tools.
+
+The critical distinction: **sponsor judges want creative, non-obvious use of their technology, not just an API call**. They know their own tools intimately and can instantly tell superficial integration from genuine depth. The winning formula is making each sponsor tool essential to your architecture — your project should feel incomplete without it. During your pitch, explicitly name-drop each sponsor tool and explain WHY you chose it.
+
+**Prize category strategy**: identify which sponsor prizes have the fewest likely competitors (obscure sponsors, complex requirements). Creators Corner also offers a "Most Viral" prize ($1,000 for a demo video getting 1K+ likes) — record a polished demo video regardless.
+
+For the pitch itself, use the **Problem → Empathy → Solution → Live Magic → Impact** arc. Open with a shocking stat or personal story (15 seconds), bridge to emotional stakes (15 seconds), reveal the solution naming sponsor tools (15 seconds), trigger the live demo with the phone ringing on speaker (60-90 seconds), and close with a vision line (15 seconds). Stories are **22x more memorable** than facts alone.
+
+---
+
+## The 3-layer safety net for your live demo
+
+**Layer 1**: Pre-record a perfect demo run using OBS or QuickTime before your presentation slot. If live fails, say confidently: "Let me show you a quick video of how this works." Judges won't penalize you — they'll penalize you for NOT having a backup.
+
+**Layer 2**: Backup slides with annotated screenshots of every conversation step. These serve as a visual walkthrough if both live and video fail.
+
+**Layer 3**: Memorize your pivot line: "Looks like the Wi-Fi isn't cooperating, so here's a walkthrough instead." Calm, confident recovery builds more trust than awkward silence. Keep a second device with the backup video queued.
+
+**Voice-specific**: test on venue Wi-Fi before your slot, use a mobile hotspot as backup, pre-warm your assistant with a test call 30 minutes before demo, and keep responses under 200 tokens for speed. Target **465-800ms end-to-end latency** — anything above 1,500ms causes conversation breakdown on stage.
+
+---
+
+## Synthesis: the project architecture that captures maximum prizes
+
+The research converges on a single optimal architecture: **a proactive consumer advocacy agent that monitors the web for financial threats and autonomously makes phone calls to resolve them**, with a live knowledge graph showing the agent's "brain" working in real-time.
+
+The technical stack maps directly to sponsor integrations: **Vapi** for voice calling, **Neo4j** for the knowledge graph brain (via Graphiti), **Tavily** for web search/discovery, **Yutori** for web browsing and proactive monitoring, **Hume AI** for real-time emotion analysis during calls, and your LLM of choice (Groq for speed, GPT-4o for reasoning). The demo moment: you show a dashboard where a Scout has detected your cable bill increased by $30, the agent autonomously calls Comcast, you hear the negotiation live on speaker, and the knowledge graph grows on screen as the agent navigates the phone tree, identifies the retention department, and secures a discount — all while Hume's emotion analysis shows the customer service rep's sentiment shifting from resistant to accommodating.
+
+This project sits in a **validated but massively underserved market** (Google's "Ask for Me" launched days before validating demand), uses every sponsor tool deeply and essentially, combines three capabilities no hackathon winner has unified before (proactive monitoring + phone calling + live graph visualization), and tells a story every judge has personally experienced — being stuck on hold, overpaying a bill, dreading the call they know they need to make.

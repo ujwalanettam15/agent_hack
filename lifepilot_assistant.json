@@ -1,0 +1,266 @@
+{
+  "name": "LifePilot Agent",
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "en",
+    "smartFormat": false,
+    "codeSwitchingEnabled": false,
+    "endpointing": 255,
+    "keywords": [
+      "LifePilot:2",
+      "Comcast:2",
+      "cancellation:1",
+      "confirmation:2",
+      "account:2"
+    ]
+  },
+  "model": {
+    "provider": "groq",
+    "model": "llama-3.3-70b-versatile",
+    "temperature": 0.4,
+    "maxTokens": 300,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are LifePilot, a professional and friendly AI assistant that handles phone calls on behalf of your client. You are currently calling a business to complete a task for your client.\n\nCORE BEHAVIOR:\n- Be polite, confident, and direct. You are a professional representative.\n- Keep responses concise \u2014 aim for 1-3 sentences per turn. This is a phone call, not an essay.\n- When you get a confirmation number, price, date, or any key detail, immediately call the extract_entities tool to log it.\n- If put on hold, acknowledge it naturally: \"Sure, I'll wait.\"\n- If the rep offers a counter-deal or discount, evaluate it against your task instructions before accepting or declining.\n- Never reveal you are an AI unless directly asked. If asked, say: \"I'm LifePilot, an AI assistant calling on behalf of my client.\"\n\nTASK INSTRUCTIONS:\nYou will receive specific task details via the search_task_context tool at the start of each call. Follow those instructions precisely.\n\nTOOL USAGE:\n- Use search_task_context FIRST to understand what you need to accomplish\n- Use tavily_search to research policies, competitor rates, or leverage before negotiating\n- Use update_neo4j to update the life graph after completing actions\n- Use extract_entities whenever you hear a confirmation number, price, date, or name\n- Use end_task when the objective is complete or the call should end"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "search_task_context",
+          "description": "Get the current task details, client info, and objectives for this call. Call this at the start of every conversation.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "task_id": {
+                "type": "string",
+                "description": "The task ID for this call"
+              }
+            },
+            "required": ["task_id"]
+          }
+        },
+        "server": {
+          "url": "https://lifepilot-backend.onrender.com/api/vapi/tool-call",
+          "timeoutSeconds": 10
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "tavily_search",
+          "description": "Search the web for information relevant to the current task. Use this to research cancellation policies, competitor rates, negotiation leverage, or any factual info needed during the call.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The search query"
+              }
+            },
+            "required": ["query"]
+          }
+        },
+        "server": {
+          "url": "https://lifepilot-backend.onrender.com/api/vapi/tool-call",
+          "timeoutSeconds": 15
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "extract_entities",
+          "description": "Extract and log key information from the conversation. Call this IMMEDIATELY when you hear a confirmation number, price quote, date, account number, or person name.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "entity_type": {
+                "type": "string",
+                "enum": ["confirmation_number", "price", "date", "account_number", "person_name", "phone_number", "other"],
+                "description": "The type of entity being extracted"
+              },
+              "value": {
+                "type": "string",
+                "description": "The extracted value"
+              },
+              "context": {
+                "type": "string",
+                "description": "Brief context about what this entity relates to"
+              }
+            },
+            "required": ["entity_type", "value", "context"]
+          }
+        },
+        "server": {
+          "url": "https://lifepilot-backend.onrender.com/api/vapi/tool-call",
+          "timeoutSeconds": 8
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "update_neo4j",
+          "description": "Update the clients life graph in Neo4j with the outcome of this call. Call this when the task is complete or when significant status changes occur.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["cancel_service", "negotiate_rate", "update_status", "add_quote", "add_contact"],
+                "description": "The type of graph update"
+              },
+              "service_name": {
+                "type": "string",
+                "description": "The service or company name"
+              },
+              "details": {
+                "type": "string",
+                "description": "JSON string with update details"
+              }
+            },
+            "required": ["action", "service_name", "details"]
+          }
+        },
+        "server": {
+          "url": "https://lifepilot-backend.onrender.com/api/vapi/tool-call",
+          "timeoutSeconds": 10
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "end_task",
+          "description": "Mark the current task as complete and end the call gracefully.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["completed", "failed", "needs_followup", "transferred"],
+                "description": "The final status of this task"
+              },
+              "summary": {
+                "type": "string",
+                "description": "Brief summary of what was accomplished"
+              }
+            },
+            "required": ["status", "summary"]
+          }
+        },
+        "server": {
+          "url": "https://lifepilot-backend.onrender.com/api/vapi/tool-call",
+          "timeoutSeconds": 8
+        }
+      }
+    ]
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "TxGEqnHWrfWFTfGW9XjX",
+    "model": "eleven_flash_v2_5",
+    "stability": 0.6,
+    "similarityBoost": 0.8,
+    "style": 0.15,
+    "useSpeakerBoost": false,
+    "optimizeStreamingLatency": 4,
+    "enableSsmlParsing": false
+  },
+  "startSpeakingPlan": {
+    "waitSeconds": 0.4,
+    "transcriptionEndpointingPlan": {
+      "onPunctuationSeconds": 0.1,
+      "onNoPunctuationSeconds": 0.8,
+      "onNumberSeconds": 0.4
+    }
+  },
+  "stopSpeakingPlan": {
+    "numWords": 3,
+    "voiceSeconds": 0.2,
+    "backoffSeconds": 1.0
+  },
+  "firstMessage": "Hi, my name is Alex from LifePilot. I'm calling on behalf of a client regarding their account. Could you help me with that?",
+  "firstMessageMode": "assistant-speaks-first",
+  "maxDurationSeconds": 300,
+  "silenceTimeoutSeconds": 30,
+  "endCallMessage": "Thank you for your help today. Have a great day!",
+  "endCallPhrases": [
+    "goodbye",
+    "have a great day",
+    "talk to you later"
+  ],
+  "backgroundSound": "off",
+  "backgroundDenoisingEnabled": true,
+  "backchannelingEnabled": true,
+  "hipaaEnabled": false,
+  "serverUrl": "https://lifepilot-backend.onrender.com/api/vapi/webhook",
+  "serverMessages": [
+    "end-of-call-report",
+    "tool-calls",
+    "status-update",
+    "transcript",
+    "conversation-update",
+    "speech-update"
+  ],
+  "clientMessages": [
+    "conversation-update",
+    "function-call",
+    "model-output",
+    "speech-update",
+    "status-update",
+    "transcript",
+    "tool-calls",
+    "voice-input"
+  ],
+  "analysisPlan": {
+    "summaryPlan": {
+      "enabled": true
+    },
+    "structuredDataPlan": {
+      "enabled": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "task_completed": {
+            "type": "boolean",
+            "description": "Whether the primary task objective was achieved"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "Brief outcome description"
+          },
+          "savings_amount": {
+            "type": "number",
+            "description": "Dollar amount saved per month, if applicable. 0 if not a savings task."
+          },
+          "confirmation_number": {
+            "type": "string",
+            "description": "Any confirmation or reference number received"
+          },
+          "follow_up_needed": {
+            "type": "boolean",
+            "description": "Whether a follow-up action is required"
+          },
+          "sentiment": {
+            "type": "string",
+            "enum": ["cooperative", "neutral", "resistant", "hostile"],
+            "description": "The customer service reps overall sentiment during the call"
+          }
+        }
+      }
+    },
+    "successEvaluationPlan": {
+      "enabled": true,
+      "rubric": "AutomaticRubric"
+    }
+  },
+  "artifactPlan": {
+    "recordingEnabled": true,
+    "videoRecordingEnabled": false,
+    "transcriptPlan": {
+      "enabled": true
+    }
+  }
+}
