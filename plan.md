@@ -4,12 +4,15 @@
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Vapi Assistant | DONE | ID: `683ebace-9e80-430e-b1a4-4d41a635114a` |
-| Vapi Tools (5x) | DONE | Standalone tools created, linked via `toolIds` |
+| Vapi Assistant | DONE | ID stored in VAPI_ASSISTANT_ID env var |
+| Vapi Tools (5x) | DONE | Standalone tools created, linked via `toolIds`, URLs pointed to Render |
 | Vapi MCP + API Key | DONE | Configured in `.claude.json` |
-| FastAPI Backend | TODO | Render Web Service |
+| FastAPI Backend | DONE | Built + tested locally, 15 files, all endpoints verified |
+| Render Deployment | IN PROGRESS | URL: `https://agenthackathon.onrender.com`, root dir needs `backend` |
+| GitHub Repo | DONE | `https://github.com/neelb1/agenthackathon` |
+| Vapi URLs Updated | DONE | Assistant + all 5 tools pointed to Render URL |
 | Neo4j AuraDB | TODO | Free tier, no credit card |
-| Tavily Integration | TODO | 1,000 free credits |
+| Tavily Integration | DONE (code) | Service written, needs API key in Render env vars |
 | Hume AI Integration | TODO | Free tier, WebSocket API |
 | React Dashboard | TODO | 3-panel layout |
 | Demo Script | TODO | Pre-record + live backup |
@@ -442,26 +445,26 @@ frontend/
 
 ## Build Order (Priority-Sorted)
 
-### Sprint 1: Core Backend (MUST HAVE)
-1. [ ] Create `backend/` directory structure
-2. [ ] Write `main.py` — FastAPI app with CORS, health check
-3. [ ] Write `routers/vapi_tools.py` — tool-call router (all 5 tools)
-4. [ ] Write `routers/vapi_webhook.py` — webhook receiver
-5. [ ] Write `services/task_store.py` — in-memory task store
-6. [ ] Write `config.py` — env vars loader
-7. [ ] Write `requirements.txt` + `render.yaml`
-8. [ ] Deploy to Render
-9. [ ] Update Vapi tools + assistant with real Render URL
-10. [ ] Test: make a real outbound call
+### Sprint 1: Core Backend (MUST HAVE) — COMPLETE
+1. [x] Create `backend/` directory structure
+2. [x] Write `main.py` — FastAPI app with CORS, health check
+3. [x] Write `routers/vapi_tools.py` — tool-call router (all 5 tools)
+4. [x] Write `routers/vapi_webhook.py` — webhook receiver
+5. [x] Write `services/task_store.py` — in-memory task store
+6. [x] Write `config.py` — env vars loader
+7. [x] Write `requirements.txt` + `render.yaml`
+8. [x] Deploy to Render — `https://agenthackathon.onrender.com`
+9. [x] Update Vapi tools + assistant with real Render URL
+10. [ ] Test: make a real outbound call (needs Vapi phone number)
 
 ### Sprint 2: Neo4j + Tavily (HIGH VALUE)
 11. [ ] Set up Neo4j AuraDB Free
-12. [ ] Write `services/neo4j_service.py`
-13. [ ] Seed graph with demo data (Neel, Comcast, Planet Fitness)
-14. [ ] Write `services/tavily_service.py`
-15. [ ] Wire tavily_search tool handler to real Tavily API
-16. [ ] Wire update_neo4j tool handler to real Neo4j writes
-17. [ ] Test: agent searches web + updates graph during call
+12. [x] Write `services/neo4j_service.py` — done, graceful when not configured
+13. [x] Seed graph with demo data — built into neo4j_service.seed_demo_data()
+14. [x] Write `services/tavily_service.py` — done, graceful when no key
+15. [x] Wire tavily_search tool handler to real Tavily API — wired in vapi_tools.py
+16. [x] Wire update_neo4j tool handler to real Neo4j writes — wired in vapi_tools.py
+17. [ ] Test: agent searches web + updates graph during call (needs API keys in Render)
 
 ### Sprint 3: Dashboard (DEMO WOW)
 18. [ ] Scaffold React + Vite frontend
@@ -486,10 +489,11 @@ frontend/
 
 ```env
 # Vapi
-VAPI_API_KEY=78c1070d-2158-4b09-bb5a-a8598071b904
-VAPI_PUBLIC_KEY=39432710-eada-4ed4-83bf-811b07ae194d
-VAPI_ASSISTANT_ID=683ebace-9e80-430e-b1a4-4d41a635114a
+VAPI_API_KEY=               # Get from dashboard.vapi.ai
+VAPI_PUBLIC_KEY=            # Get from dashboard.vapi.ai
+VAPI_ASSISTANT_ID=          # Your assistant ID from Vapi
 VAPI_PHONE_NUMBER_ID=       # Get from Vapi dashboard after buying
+VAPI_TOOL_IDS=              # Comma-separated tool IDs from Vapi
 
 # Neo4j AuraDB
 NEO4J_URI=                  # neo4j+s://xxxxx.databases.neo4j.io
@@ -507,15 +511,8 @@ HUME_API_KEY=               # Get from platform.hume.ai
 
 ## Vapi IDs Reference
 
-| Resource | ID |
-|----------|-----|
-| Assistant | `683ebace-9e80-430e-b1a4-4d41a635114a` |
-| Tool: search_task_context | `e9ff3f6a-9ca7-4cc7-b813-e64303f3039d` |
-| Tool: tavily_search | `973bc849-182a-48d6-a74f-628d3efa0819` |
-| Tool: extract_entities | `f33abc31-4718-490b-acb5-a33a5cc80ad8` |
-| Tool: update_neo4j | `44a216e3-c4ce-49e6-b2d4-c87d23f9f040` |
-| Tool: end_task | `e069543a-62af-430a-a12d-8dd191f73fd5` |
-| Org | `baf1a3e2-d03b-42be-b288-6a4cc751f08b` |
+> **Note:** All Vapi IDs are stored in environment variables. See `.env.example` for the full list.
+> Never commit real IDs to version control.
 
 ---
 

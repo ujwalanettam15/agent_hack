@@ -90,13 +90,10 @@ async def update_assistant_server_url(new_url: str) -> dict:
 
 async def update_tool_server_urls(new_url: str) -> list[dict]:
     """Update all 5 tool server URLs to point to new backend."""
-    tool_ids = [
-        "e9ff3f6a-9ca7-4cc7-b813-e64303f3039d",  # search_task_context
-        "973bc849-182a-48d6-a74f-628d3efa0819",  # tavily_search
-        "f33abc31-4718-490b-acb5-a33a5cc80ad8",  # extract_entities
-        "44a216e3-c4ce-49e6-b2d4-c87d23f9f040",  # update_neo4j
-        "e069543a-62af-430a-a12d-8dd191f73fd5",  # end_task
-    ]
+    tool_ids = config.VAPI_TOOL_IDS
+    if not tool_ids:
+        logger.warning("VAPI_TOOL_IDS not set — skipping tool URL updates")
+        return []
     results = []
     async with httpx.AsyncClient() as client:
         for tool_id in tool_ids:

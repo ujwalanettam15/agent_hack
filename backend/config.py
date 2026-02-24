@@ -6,8 +6,11 @@ load_dotenv()
 # Vapi
 VAPI_API_KEY = os.getenv("VAPI_API_KEY", "")
 VAPI_PUBLIC_KEY = os.getenv("VAPI_PUBLIC_KEY", "")
-VAPI_ASSISTANT_ID = os.getenv("VAPI_ASSISTANT_ID", "683ebace-9e80-430e-b1a4-4d41a635114a")
+VAPI_ASSISTANT_ID = os.getenv("VAPI_ASSISTANT_ID", "")
 VAPI_PHONE_NUMBER_ID = os.getenv("VAPI_PHONE_NUMBER_ID", "")
+
+# Vapi Tool IDs (comma-separated in env, or set individually)
+VAPI_TOOL_IDS = os.getenv("VAPI_TOOL_IDS", "").split(",") if os.getenv("VAPI_TOOL_IDS") else []
 
 # Neo4j
 NEO4J_URI = os.getenv("NEO4J_URI", "")
